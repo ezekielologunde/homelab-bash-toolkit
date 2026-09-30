@@ -44,14 +44,22 @@ line the script controls instead of the exit code alone.
 CI (`.github/workflows/ci.yml`) runs `shellcheck` first, then the smoke
 tests, on every push - both visible in the repo's own Actions history.
 
-One real bug the tests caught during development: an early version of
-`disk-load-report.sh` parsed `df -P`'s output by fixed column position
-(`$5`), which breaks the moment a filesystem name contains a space (for
-example a mount whose device path is `C:/Program Files/Git`, which
-splits into extra fields). Fixed by indexing from the end
-(`$(NF-1)`), which stays correct however many fields the filesystem-name
-column expands into. Left as an authentic example of what the smoke tests
-are actually for, not cleaned out of the commit history.
+Two real issues the CI pipeline itself caught during development, left
+visible in the commit/Actions history rather than squashed away:
+
+- The first push failed every smoke test with exit code 126 ("Permission
+  denied") - the scripts' executable bit was lost when they were developed
+  on Windows/Git Bash, where `chmod +x` doesn't reliably propagate to git's
+  index the way it does on native Linux/macOS. Fixed with
+  `git update-index --chmod=+x`, a real cross-platform-development gotcha,
+  not a hypothetical one.
+- The smoke tests also caught a real parsing bug: an early version of
+  `disk-load-report.sh` parsed `df -P`'s output by fixed column position
+  (`$5`), which breaks the moment a filesystem name contains a space (for
+  example a mount whose device path is `C:/Program Files/Git`, which
+  splits into extra fields). Fixed by indexing from the end (`$(NF-1)`),
+  which stays correct however many fields the filesystem-name column
+  expands into.
 
 ## Running locally
 
